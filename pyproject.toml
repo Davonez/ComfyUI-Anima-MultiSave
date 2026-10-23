@@ -1,0 +1,24 @@
+[project]
+name = "comfyui-anima-multisave"
+version = "1.1.1"
+description = "Anima 多路保存：多路 IMAGE 自动挑最终图落盘（12 路 / 动态端口）+ 元数据消除"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "koivis" }]
+keywords = ["comfyui", "custom-nodes", "save", "image", "metadata", "anima"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/Davonez/ComfyUI-Anima-MultiSave"
+Repository = "https://github.com/Davonez/ComfyUI-Anima-MultiSave"
+"Issue Tracker" = "https://github.com/Davonez/ComfyUI-Anima-MultiSave/issues"
+
+# ComfyUI Registry 的展示信息（按需补 PublisherId 后即可 comfy node publish）
+[tool.comfy]
+DisplayName = "Anima Multi-Save"

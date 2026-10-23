@@ -1,0 +1,127 @@
+{
+  "id": "3f7c1a52-8f0e-4b1d-9c1a-0a1b2c3d4e5f",
+  "revision": 0,
+  "last_node_id": 5,
+  "last_link_id": 3,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "EmptyImage",
+      "pos": [80, 120],
+      "size": [270, 150],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        { "name": "IMAGE", "type": "IMAGE", "links": [1], "slot_index": 0 }
+      ],
+      "properties": { "Node name for S&R": "EmptyImage" },
+      "widgets_values": [512, 512, 1, 16711680],
+      "color": "#322",
+      "bgcolor": "#533",
+      "title": "① 第一级采样（红）— 接 KSampler 1"
+    },
+    {
+      "id": 2,
+      "type": "EmptyImage",
+      "pos": [80, 330],
+      "size": [270, 150],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        { "name": "IMAGE", "type": "IMAGE", "links": [2], "slot_index": 0 }
+      ],
+      "properties": { "Node name for S&R": "EmptyImage" },
+      "widgets_values": [512, 512, 1, 65280],
+      "color": "#232",
+      "bgcolor": "#353",
+      "title": "② 第二级细化（绿）— 接 KSampler 2"
+    },
+    {
+      "id": 3,
+      "type": "EmptyImage",
+      "pos": [80, 540],
+      "size": [270, 150],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        { "name": "IMAGE", "type": "IMAGE", "links": [3], "slot_index": 0 }
+      ],
+      "properties": { "Node name for S&R": "EmptyImage" },
+      "widgets_values": [512, 512, 1, 255],
+      "color": "#223",
+      "bgcolor": "#335",
+      "title": "③ 最终放大/后处理（蓝）— 接最终 VAE Decode"
+    },
+    {
+      "id": 4,
+      "type": "AnimaMultiSave",
+      "pos": [460, 120],
+      "size": [400, 640],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        { "name": "images_1", "type": "IMAGE", "link": 1 },
+        { "name": "images_2", "type": "IMAGE", "link": 2 },
+        { "name": "images_3", "type": "IMAGE", "link": 3 },
+        { "name": "images_4", "type": "IMAGE", "link": null },
+        { "name": "images_5", "type": "IMAGE", "link": null },
+        { "name": "images_6", "type": "IMAGE", "link": null },
+        { "name": "images_7", "type": "IMAGE", "link": null },
+        { "name": "images_8", "type": "IMAGE", "link": null }
+      ],
+      "outputs": [
+        { "name": "image", "type": "IMAGE", "links": [], "slot_index": 0 },
+        { "name": "info", "type": "STRING", "links": [], "slot_index": 1 }
+      ],
+      "properties": { "Node name for S&R": "AnimaMultiSave" },
+      "widgets_values": [
+        "anima/demo",
+        "best_only",
+        "high_port_first",
+        "png",
+        95,
+        4,
+        "strip_all",
+        true,
+        true
+      ],
+      "title": "保存：谁跑到最后就存谁"
+    },
+    {
+      "id": 5,
+      "type": "Note",
+      "pos": [80, 740],
+      "size": [780, 240],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": { "text": "" },
+      "widgets_values": [
+        "【自测 / 演示用最小工作流】\n1. 直接点「添加提示词队列」→ 输出 output/anima/demo_00001.png，应该是蓝色（端口③ 优先级最高）。\n2. 选中③号节点按 Ctrl+M 静音（或删掉连线）再跑一次 → 同一个文件变成绿色。\n3. 再把②号也静音 → 变成红色。\n4. 全部改回来再跑 → 又变回蓝色，而且文件名始终是 demo_00001.png（覆盖，不堆历史）。\n\n换成你自己的工作流时：把 ① 接第一次采样的 VAE Decode、② 接细化后的、③ 接最终放大的就行。\n图片元数据默认被清空：右键看图 → 属性里看不到 prompt / workflow。"
+      ],
+      "color": "#432",
+      "bgcolor": "#653",
+      "title": "怎么玩这个节点"
+    }
+  ],
+  "links": [
+    [1, 1, 0, 4, 0, "IMAGE"],
+    [2, 2, 0, 4, 1, "IMAGE"],
+    [3, 3, 0, 4, 2, "IMAGE"]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": { "scale": 1, "offset": [0, 0] }
+  },
+  "version": 0.4
+}
