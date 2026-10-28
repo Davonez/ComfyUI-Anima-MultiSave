@@ -107,7 +107,7 @@ def main():
             px = im.convert("RGB").getpixel((0, 0))
             check("像素是端口3的蓝", px == (0, 0, 255), px)
             check("尺寸正确", im.size == (48, 32), im.size)
-        check("info 里写端口 3", "端口 3" in r["result"][1], r["result"][1])
+        check("info 里写端口 3", "ports 3" in r["result"][1], r["result"][1])
         check("返回的图是端口3", torch.equal(r["result"][0], blue), r["result"][0].shape)
         check("ui 只有 1 张", len(r["ui"]["images"]) == 1, r["ui"]["images"])
 
@@ -118,7 +118,7 @@ def main():
             px = im.convert("RGB").getpixel((0, 0))
         check("退到端口2的绿", px == (0, 255, 0), px)
         check("没有多出文件", files(out) == ["result_00001.png"], files(out))
-        check("info 里写端口 2", "端口 2" in r["result"][1], r["result"][1])
+        check("info 里写端口 2", "ports 2" in r["result"][1], r["result"][1])
 
         # ---- 3. 端口2、3 都静音 → 存端口1 ----------------------------
         print("\n[3] 端口2、3 都静音")
@@ -132,7 +132,7 @@ def main():
         r = run(node)
         check("不炸，ui 为空", r["ui"]["images"] == [], r)
         check("result 图是 None", r["result"][0] is None)
-        check("info 说明原因", "没有可用输入" in r["result"][1], r["result"][1])
+        check("info 说明原因", "No usable input" in r["result"][1], r["result"][1])
 
         # ---- 5. 元数据消除 ------------------------------------------
         print("\n[5] 元数据消除")
@@ -178,7 +178,7 @@ def main():
         r = run(node, images_1=make((0.5, 0.5, 0.5), batch=2))
         check("回落到 2 帧，第 3 帧被清掉",
               files(out) == ["result_00001.png", "result_00002.png"], files(out))
-        check("info 提到清理", "清理旧文件 1 个" in r["result"][1], r["result"][1])
+        check("info 提到清理", "removed 1 stale file" in r["result"][1], r["result"][1])
 
         # ---- 8. clean_stale=False 时不许删 ------------------------
         print("\n[8] clean_stale=False 不删旧帧")
@@ -232,7 +232,7 @@ def main():
         r = run(node, format="jpg", quality=90, metadata="embed_workflow",
                 images_1=blue, prompt=fake_prompt)
         check("jpg + embed_workflow 不炸、仍然干净",
-              "不支持嵌入" in r["result"][1] and not any(
+              "cannot embed" in r["result"][1] and not any(
                   k.lower() in ("prompt", "workflow") for k in meta_of(
                       os.path.join(out, "result_00001.jpg"))[0]),
               r["result"][1])

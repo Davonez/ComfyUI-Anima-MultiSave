@@ -1,0 +1,192 @@
+{
+  "AnimaMultiSave": {
+    "display_name": "💾 Anima 多路保存 (固定 12 路)",
+    "description": "多端口保存：12 个 IMAGE 输入（动态端口版可以无限加），自动挑「跑得最远（优先级最高）的那一路」落盘，支持覆盖写 / 清旧帧 / 元数据消除。",
+    "inputs": {
+      "filename_prefix": {
+        "name": "文件名前缀",
+        "tooltip": "输出文件名前缀，可带子目录（anima/result → output/anima/），也支持 %date% %width% 等 ComfyUI 变量。"
+      },
+      "output_mode": {
+        "name": "输出模式",
+        "tooltip": "best_only：只保存优先级最高的那一路（推荐）。all_inputs：每一路都存一份，文件名带 _p1/_p2… 后缀。",
+        "options": {
+          "best_only": "只存最优",
+          "all_inputs": "每路都存"
+        }
+      },
+      "priority_order": {
+        "name": "优先级顺序",
+        "tooltip": "high_port_first：端口号大的优先（后面接最终图）。low_port_first：端口号小的优先。",
+        "options": {
+          "high_port_first": "大端口优先",
+          "low_port_first": "小端口优先"
+        }
+      },
+      "format": {
+        "name": "格式",
+        "tooltip": "png 无损；jpg / webp 有损但体积小。",
+        "options": {
+          "png": "PNG",
+          "jpg": "JPG",
+          "webp": "WEBP"
+        }
+      },
+      "quality": {
+        "name": "质量",
+        "tooltip": "jpg / webp 的质量，png 不用这个参数。"
+      },
+      "png_compress_level": {
+        "name": "PNG 压缩等级",
+        "tooltip": "PNG 压缩等级，只影响体积和保存速度，不影响画质。"
+      },
+      "metadata": {
+        "name": "元数据",
+        "tooltip": "strip_all：不写入、并逐块清除 prompt / workflow / EXIF 等元数据。embed_workflow：和原生 SaveImage 一样把工作流写进 PNG（仅 png 生效）。",
+        "options": {
+          "strip_all": "全部清除",
+          "embed_workflow": "嵌入工作流（仅 png）"
+        }
+      },
+      "overwrite": {
+        "name": "覆盖写",
+        "tooltip": "False（推荐）：每轮用 ComfyUI 自增编号新建文件，历史/队列里的缩略图各是各的。True：始终覆盖同一组文件名（固定路径永远是最新图）；本节点会另外往 temp/ 写一份唯一命名的预览副本，避免历史全变成最新那张。"
+      },
+      "clean_stale": {
+        "name": "清理旧帧",
+        "tooltip": "只在 overwrite=True 时生效：顺手删掉同前缀下这次没产出的旧帧（例如上次 16 帧、这次 8 帧）。只删严格匹配「前缀[_pN]_00001」的文件。"
+      },
+      "images_1": {
+        "name": "第 1 路图片",
+        "tooltip": "第 1 路图片。没接线 / 被静音 / 被旁路时这里就是空的，节点会自动往下退一级。"
+      },
+      "images_2": {
+        "name": "第 2 路图片",
+        "tooltip": "第 2 路图片。没接线 / 被静音 / 被旁路时这里就是空的，节点会自动往下退一级。"
+      },
+      "images_3": {
+        "name": "第 3 路图片",
+        "tooltip": "第 3 路图片。没接线 / 被静音 / 被旁路时这里就是空的，节点会自动往下退一级。"
+      },
+      "images_4": {
+        "name": "第 4 路图片",
+        "tooltip": "第 4 路图片。没接线 / 被静音 / 被旁路时这里就是空的，节点会自动往下退一级。"
+      },
+      "images_5": {
+        "name": "第 5 路图片",
+        "tooltip": "第 5 路图片。没接线 / 被静音 / 被旁路时这里就是空的，节点会自动往下退一级。"
+      },
+      "images_6": {
+        "name": "第 6 路图片",
+        "tooltip": "第 6 路图片。没接线 / 被静音 / 被旁路时这里就是空的，节点会自动往下退一级。"
+      },
+      "images_7": {
+        "name": "第 7 路图片",
+        "tooltip": "第 7 路图片。没接线 / 被静音 / 被旁路时这里就是空的，节点会自动往下退一级。"
+      },
+      "images_8": {
+        "name": "第 8 路图片",
+        "tooltip": "第 8 路图片。没接线 / 被静音 / 被旁路时这里就是空的，节点会自动往下退一级。"
+      },
+      "images_9": {
+        "name": "第 9 路图片",
+        "tooltip": "第 9 路图片。没接线 / 被静音 / 被旁路时这里就是空的，节点会自动往下退一级。"
+      },
+      "images_10": {
+        "name": "第 10 路图片",
+        "tooltip": "第 10 路图片。没接线 / 被静音 / 被旁路时这里就是空的，节点会自动往下退一级。"
+      },
+      "images_11": {
+        "name": "第 11 路图片",
+        "tooltip": "第 11 路图片。没接线 / 被静音 / 被旁路时这里就是空的，节点会自动往下退一级。"
+      },
+      "images_12": {
+        "name": "第 12 路图片",
+        "tooltip": "第 12 路图片。没接线 / 被静音 / 被旁路时这里就是空的，节点会自动往下退一级。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "图片",
+        "tooltip": "被选中的那一路图（4D IMAGE batch），可以继续接别的节点。"
+      },
+      "1": {
+        "name": "说明",
+        "tooltip": "人类可读的说明：用到了哪个端口、存了哪些文件、元数据清没清。"
+      }
+    }
+  },
+  "AnimaMultiSaveDynamic": {
+    "display_name": "💾 Anima 多路保存 (动态端口)",
+    "description": "多路保存：IMAGE 输入可以一直点 + 增加，自动挑「这次跑到最远（端口号最大）的那一路」落盘，文件名固定覆盖，可清旧帧、可去除元数据。",
+    "inputs": {
+      "filename_prefix": {
+        "name": "文件名前缀",
+        "tooltip": "输出文件名前缀，可带子目录（anima/result → output/anima/），也支持 %date% %width% 等 ComfyUI 变量。"
+      },
+      "output_mode": {
+        "name": "输出模式",
+        "tooltip": "best_only：只保存优先级最高的那一路（推荐）。all_inputs：每一路都存一份，文件名带 _p1/_p2… 后缀。",
+        "options": {
+          "best_only": "只存最优",
+          "all_inputs": "每路都存"
+        }
+      },
+      "priority_order": {
+        "name": "优先级顺序",
+        "tooltip": "high_port_first：端口号大的优先（后面接最终图）。low_port_first：端口号小的优先。",
+        "options": {
+          "high_port_first": "大端口优先",
+          "low_port_first": "小端口优先"
+        }
+      },
+      "format": {
+        "name": "格式",
+        "tooltip": "png 无损；jpg / webp 有损但体积小。",
+        "options": {
+          "png": "PNG",
+          "jpg": "JPG",
+          "webp": "WEBP"
+        }
+      },
+      "quality": {
+        "name": "质量",
+        "tooltip": "jpg / webp 的质量，png 不用这个参数。"
+      },
+      "png_compress_level": {
+        "name": "PNG 压缩等级",
+        "tooltip": "PNG 压缩等级，只影响体积和保存速度，不影响画质。"
+      },
+      "metadata": {
+        "name": "元数据",
+        "tooltip": "strip_all：不写入、并逐块清除 prompt / workflow / EXIF 等元数据。embed_workflow：和原生 SaveImage 一样把工作流写进 PNG（仅 png 生效）。",
+        "options": {
+          "strip_all": "全部清除",
+          "embed_workflow": "嵌入工作流（仅 png）"
+        }
+      },
+      "overwrite": {
+        "name": "覆盖写",
+        "tooltip": "False（推荐）：每轮用 ComfyUI 自增编号新建文件，历史/队列里的缩略图各是各的。True：始终覆盖同一组文件名（固定路径永远是最新图）；本节点会另外往 temp/ 写一份唯一命名的预览副本，避免历史全变成最新那张。"
+      },
+      "clean_stale": {
+        "name": "清理旧帧",
+        "tooltip": "只在 overwrite=True 时生效：顺手删掉同前缀下这次没产出的旧帧（例如上次 16 帧、这次 8 帧）。只删严格匹配「前缀[_pN]_00001」的文件。"
+      },
+      "images": {
+        "name": "图片",
+        "tooltip": "把 IMAGE 接进来，接多少都行：点输入下面的 + 继续加口。端口序号越大优先级越高。"
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "图片",
+        "tooltip": "被选中的那一路图（4D IMAGE batch），可以继续接别的节点。"
+      },
+      "1": {
+        "name": "说明",
+        "tooltip": "人类可读的说明：用到了哪个端口、存了哪些文件、元数据清没清。"
+      }
+    }
+  }
+}

@@ -1,0 +1,192 @@
+{
+  "AnimaMultiSave": {
+    "display_name": "💾 Anima Multi-Save (Fixed 12 Ports)",
+    "description": "Multi-port save: 12 IMAGE inputs (the dynamic-port variant can grow freely). Saves whichever port ran furthest (highest priority), with overwrite mode, stale-file cleanup and metadata stripping.",
+    "inputs": {
+      "filename_prefix": {
+        "name": "Filename prefix",
+        "tooltip": "Output filename prefix. Subfolders are allowed (anima/result -> output/anima/); ComfyUI variables such as %date% / %width% work too."
+      },
+      "output_mode": {
+        "name": "Output mode",
+        "tooltip": "best_only: save only the highest-priority port (recommended). all_inputs: save every port that carries an image, each with a _p1/_p2... suffix.",
+        "options": {
+          "best_only": "Best only",
+          "all_inputs": "All inputs"
+        }
+      },
+      "priority_order": {
+        "name": "Priority order",
+        "tooltip": "high_port_first: higher port numbers win (wire the final image to the highest port). low_port_first: lower port numbers win.",
+        "options": {
+          "high_port_first": "High port first",
+          "low_port_first": "Low port first"
+        }
+      },
+      "format": {
+        "name": "Format",
+        "tooltip": "png is lossless; jpg / webp are lossy but much smaller.",
+        "options": {
+          "png": "PNG",
+          "jpg": "JPG",
+          "webp": "WEBP"
+        }
+      },
+      "quality": {
+        "name": "Quality",
+        "tooltip": "Quality for jpg / webp. Ignored for png."
+      },
+      "png_compress_level": {
+        "name": "PNG compress level",
+        "tooltip": "PNG compression level. Affects file size and save speed only, not image quality."
+      },
+      "metadata": {
+        "name": "Metadata",
+        "tooltip": "strip_all: write nothing and strip prompt / workflow / EXIF metadata chunk by chunk. embed_workflow: embed the workflow like the native SaveImage node (png only).",
+        "options": {
+          "strip_all": "Strip all metadata",
+          "embed_workflow": "Embed workflow (png only)"
+        }
+      },
+      "overwrite": {
+        "name": "Overwrite",
+        "tooltip": "False (recommended): create a new file each run so history and queue thumbnails stay distinct. True: always overwrite the same filenames; the node then writes a uniquely named preview copy under temp/ so history does not collapse onto the latest image."
+      },
+      "clean_stale": {
+        "name": "Clean stale files",
+        "tooltip": "Only used when overwrite=True: also remove stale frames from the same prefix that this run did not produce (strict prefix[_pN]_00001 matches only)."
+      },
+      "images_1": {
+        "name": "Image 1",
+        "tooltip": "Image for port 1. Empty when not connected / muted / bypassed; the node then steps down to the next port."
+      },
+      "images_2": {
+        "name": "Image 2",
+        "tooltip": "Image for port 2. Empty when not connected / muted / bypassed; the node then steps down to the next port."
+      },
+      "images_3": {
+        "name": "Image 3",
+        "tooltip": "Image for port 3. Empty when not connected / muted / bypassed; the node then steps down to the next port."
+      },
+      "images_4": {
+        "name": "Image 4",
+        "tooltip": "Image for port 4. Empty when not connected / muted / bypassed; the node then steps down to the next port."
+      },
+      "images_5": {
+        "name": "Image 5",
+        "tooltip": "Image for port 5. Empty when not connected / muted / bypassed; the node then steps down to the next port."
+      },
+      "images_6": {
+        "name": "Image 6",
+        "tooltip": "Image for port 6. Empty when not connected / muted / bypassed; the node then steps down to the next port."
+      },
+      "images_7": {
+        "name": "Image 7",
+        "tooltip": "Image for port 7. Empty when not connected / muted / bypassed; the node then steps down to the next port."
+      },
+      "images_8": {
+        "name": "Image 8",
+        "tooltip": "Image for port 8. Empty when not connected / muted / bypassed; the node then steps down to the next port."
+      },
+      "images_9": {
+        "name": "Image 9",
+        "tooltip": "Image for port 9. Empty when not connected / muted / bypassed; the node then steps down to the next port."
+      },
+      "images_10": {
+        "name": "Image 10",
+        "tooltip": "Image for port 10. Empty when not connected / muted / bypassed; the node then steps down to the next port."
+      },
+      "images_11": {
+        "name": "Image 11",
+        "tooltip": "Image for port 11. Empty when not connected / muted / bypassed; the node then steps down to the next port."
+      },
+      "images_12": {
+        "name": "Image 12",
+        "tooltip": "Image for port 12. Empty when not connected / muted / bypassed; the node then steps down to the next port."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "image",
+        "tooltip": "The selected image (4D IMAGE batch), can be wired further."
+      },
+      "1": {
+        "name": "info",
+        "tooltip": "Human-readable summary: which port was used, which files were written, and whether metadata was stripped."
+      }
+    }
+  },
+  "AnimaMultiSaveDynamic": {
+    "display_name": "💾 Anima Multi-Save (Dynamic Ports)",
+    "description": "Multi-port save with growable IMAGE inputs: click + to add as many ports as needed, and the node saves whichever port ran furthest (highest port number). Optional fixed filenames, stale-frame cleanup and metadata stripping.",
+    "inputs": {
+      "filename_prefix": {
+        "name": "Filename prefix",
+        "tooltip": "Output filename prefix. Subfolders are allowed (anima/result -> output/anima/); ComfyUI variables such as %date% / %width% work too."
+      },
+      "output_mode": {
+        "name": "Output mode",
+        "tooltip": "best_only: save only the highest-priority port (recommended). all_inputs: save every port that carries an image, each with a _p1/_p2... suffix.",
+        "options": {
+          "best_only": "Best only",
+          "all_inputs": "All inputs"
+        }
+      },
+      "priority_order": {
+        "name": "Priority order",
+        "tooltip": "high_port_first: higher port numbers win (wire the final image to the highest port). low_port_first: lower port numbers win.",
+        "options": {
+          "high_port_first": "High port first",
+          "low_port_first": "Low port first"
+        }
+      },
+      "format": {
+        "name": "Format",
+        "tooltip": "png is lossless; jpg / webp are lossy but much smaller.",
+        "options": {
+          "png": "PNG",
+          "jpg": "JPG",
+          "webp": "WEBP"
+        }
+      },
+      "quality": {
+        "name": "Quality",
+        "tooltip": "Quality for jpg / webp. Ignored for png."
+      },
+      "png_compress_level": {
+        "name": "PNG compress level",
+        "tooltip": "PNG compression level. Affects file size and save speed only, not image quality."
+      },
+      "metadata": {
+        "name": "Metadata",
+        "tooltip": "strip_all: write nothing and strip prompt / workflow / EXIF metadata chunk by chunk. embed_workflow: embed the workflow like the native SaveImage node (png only).",
+        "options": {
+          "strip_all": "Strip all metadata",
+          "embed_workflow": "Embed workflow (png only)"
+        }
+      },
+      "overwrite": {
+        "name": "Overwrite",
+        "tooltip": "False (recommended): create a new file each run so history and queue thumbnails stay distinct. True: always overwrite the same filenames; the node then writes a uniquely named preview copy under temp/ so history does not collapse onto the latest image."
+      },
+      "clean_stale": {
+        "name": "Clean stale files",
+        "tooltip": "Only used when overwrite=True: also remove stale frames from the same prefix that this run did not produce (strict prefix[_pN]_00001 matches only)."
+      },
+      "images": {
+        "name": "Images",
+        "tooltip": "Wire IMAGE outputs here; add as many as you like with the + button. Higher port numbers have higher priority."
+      }
+    },
+    "outputs": {
+      "0": {
+        "name": "image",
+        "tooltip": "The selected image (4D IMAGE batch), can be wired further."
+      },
+      "1": {
+        "name": "info",
+        "tooltip": "Human-readable summary: which port was used, which files were written, and whether metadata was stripped."
+      }
+    }
+  }
+}

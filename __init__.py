@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""ComfyUI-Anima-MultiSave：多端口自动保存 + 元数据消除。
+"""ComfyUI-Anima-MultiSave: multi-port auto save + metadata stripping.
 
-装了两个节点：
-  * AnimaMultiSave         固定 12 路（老版 V1 节点，任何 ComfyUI 版本都能跑）
-  * AnimaMultiSaveDynamic  动态端口（V3 节点，输入可以点 + 无限增加）
+Two nodes are installed:
+  * AnimaMultiSave         fixed 12 ports (V1 node, loads on any ComfyUI version)
+  * AnimaMultiSaveDynamic  dynamic ports (V3 node, add inputs with the + button)
 """
 import logging
 
@@ -27,7 +27,9 @@ try:
     NODE_DISPLAY_NAME_MAPPINGS.update(_NAMES2)
 except Exception as exc:  # 老版本 ComfyUI 没有 comfy_api.latest，就只装固定端口版
     logging.warning(
-        "[Anima 多路保存] 动态端口版没装上（%s），固定 12 路版不受影响。", exc
+        "[Anima Multi-Save] the dynamic-port node failed to load (%s); the fixed "
+        "12-port node is unaffected.",
+        exc,
     )
 
 __all__ = [

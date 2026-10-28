@@ -1,59 +1,70 @@
 # -*- coding: utf-8 -*-
 """
-Anima 多路保存 / Anima Multi-Slot Save
+Anima Multi-Save for ComfyUI
 ================================================================
-给 Anima（anima-art / AnimaArt 系）工作流用的「多端口自动落盘」保存节点。
+A "save every port, keep the furthest one" node for Anima (anima-art /
+AnimaArt) workflows.
 
-两个版本，同一个内核
--------------------
-* `AnimaMultiSave`        固定 12 路。老版 V1 节点，任何 ComfyUI 版本都能加载。
-* `AnimaMultiSaveDynamic` 动态端口版（V3 / Autogrow）：先给 3 个口，接不够就点输入上的
-                          `+` 继续加，最多 40。以后还要接更多路就用这个。
-挑图 / 落盘 / 清旧帧 / 去元数据全在 `save_ports()` 里，两个节点行为完全一致。
+Two variants, one core
+----------------------
+* `AnimaMultiSave`        fixed 12 ports. The V1 node - loads on any ComfyUI version.
+* `AnimaMultiSaveDynamic` dynamic ports (V3 / Autogrow): starts with 3 slots and
+                          grows via the `+` button, up to 40.
+Port selection, file writing, stale cleanup and metadata stripping all live in
+`save_ports()`, so both nodes behave identically.
 
-解决两个痛点
-------------
-1. **一个保存节点吃多路图，自动挑「跑得最远的那张」**
-   比如：KSampler 1 → 端口1，KSampler 2（细化）→ 端口2，最终放大 / 后处理 → 端口3。
-   哪一路被静音（mute / Ctrl+M）或者被旁路（bypass / Ctrl+B），那一路在提交给后端时
-   整条连线就没了 —— 本节点收到的就是 None，于是自动往下一级退：
-     * 三级都亮 → 存端口3（最终图）
-     * 最终级灭了 → 存端口2
-     * 最终级 + 细化级都灭 → 存端口1
-   overwrite=True 时每次运行都用**同一组文件名**，永远只有一份最新结果、不会堆历史图；
-   默认 overwrite=False 则每轮另起编号（result_00001.png、result_00002.png…），和原生
-   SaveImage 一样方便翻历史 —— 两种取舍见 README「两种命名方式」。
+Two problems it solves
+----------------------
+1. **One save node for several ports, automatically keeping "the image that ran furthest"**
+   For example: KSampler 1 -> port 1, KSampler 2 (refine) -> port 2, final upscale /
+   post-processing -> port 3. When a stage is muted (Ctrl+M) or bypassed (Ctrl+B) its
+   link disappears from the prompt and this node receives None for that port, so it
+   steps down one level:
+     * all three alive -> save port 3 (final image)
+     * final stage dead -> save port 2
+     * final and refine both dead -> save port 1
+   With overwrite=True every run reuses the same filenames, so only the latest result
+   exists; with the default overwrite=False each run gets a new number, like the
+   native SaveImage node - see "Two naming modes" in the README.
 
-2. **元数据消除**
-   ComfyUI 原生 SaveImage 会把整条工作流塞进 PNG 的 tEXt（prompt / workflow），
-   图一发出去就等于把提示词、模型、LoRA 全送人。本节点默认 `metadata=strip_all`：
-   * 保存时不写入任何 PNG 文本块；
-   * 写出后再按 PNG chunk 结构**逐块过滤** tEXt / zTXt / iTXt / eXIf / tIME 等元数据；
-   * 最后重新打开文件校验一遍，万一还有残留会在控制台报警（不会静默放过）。
-   想保留工作流就切 `metadata=embed_workflow`（和原生 SaveImage 一样写 prompt/workflow）。
+2. **Metadata stripping**
+   ComfyUI's native SaveImage embeds the whole workflow in the PNG tEXt chunks
+   (prompt / workflow), which leaks your prompt, models and LoRAs the moment you share
+   the image. This node defaults to `metadata=strip_all`:
+   * nothing is written into the PNG text chunks;
+   * after encoding, tEXt / zTXt / iTXt / eXIf / tIME and other metadata chunks are
+     filtered out chunk by chunk;
+   * the file is re-opened afterwards and verified, so leftovers are reported instead
+     of being silently ignored.
+   Switch to `metadata=embed_workflow` to keep the workflow (same as native SaveImage).
 
-参数速查
---------
-filename_prefix     输出前缀，支持子目录（`anima/result` → output/anima/）和 ComfyUI 的
-                    %date% / %width% 之类变量。
-output_mode         best_only   只存「优先级最高的那一路」（推荐）
-                    all_inputs  每一路都存一份，各自带 `_p<端口号>` 后缀
-priority_order      端口号大的优先（high_port_first）/ 端口号小的优先（low_port_first）
+Parameter quick reference
+-------------------------
+filename_prefix     output prefix; subfolders are allowed (`anima/result` ->
+                    output/anima/) and ComfyUI variables such as %date% / %width% work.
+output_mode         best_only   save only the highest-priority port (recommended)
+                    all_inputs  save every port, each with a `_p<port>` suffix
+priority_order      high port numbers first (high_port_first) / low first (low_port_first)
 format              png / jpg / webp
-quality             jpg / webp 的质量（1-100）
-png_compress_level  PNG 压缩等级 0-9（只影响体积和速度，不影响画质）
-metadata            strip_all 清干净 / embed_workflow 写回工作流
-overwrite           True = 每次覆盖同一组文件名；False = 用 ComfyUI 的自增编号
-clean_stale         True = 顺手删掉同前缀下上次多出来、这次没产出的旧帧
-                    （只删 `前缀[_pN]_00001.png` 这种严格匹配的文件，删的时候会打日志）
+quality             jpg / webp quality (1-100)
+png_compress_level  PNG compression level 0-9 (size/speed only, not quality)
+metadata            strip_all clears everything / embed_workflow writes the workflow
+overwrite           True = overwrite the same filenames every run; False = use
+                    ComfyUI's auto-incrementing counter
+clean_stale         True = also delete stale frames from the same prefix that this
+                    run did not produce (strict `prefix[_pN]_00001` matches only;
+                    deletions are logged)
 
-输出
-----
-image  被选中的那一路图（4D IMAGE batch），可以继续接别的节点
-info   人类可读的说明（用到了哪个端口、存了哪些文件、元数据清没清），可接 Show Text
+Outputs
+-------
+image  the selected image (4D IMAGE batch), can be wired further
+info   human-readable summary (which port was used, which files were written,
+       whether metadata was stripped) - connect Show Text to display it
 
-作者备注：节点被设计成「永远重新执行」（IS_CHANGED 返回 NaN）。因为静音/取消静音来回切换时，
-输入组合可能和上上次完全一样，如果走缓存就不会重新落盘，磁盘上会留着一张上一轮别的图。
+Author note: the node is designed to always re-execute (IS_CHANGED returns NaN).
+Toggling mute on and off can produce an input combination identical to an older run;
+with caching the file would not be rewritten and the disk would keep an image from a
+previous run.
 """
 
 from __future__ import annotations
@@ -81,7 +92,7 @@ except Exception:  # pragma: no cover
 
 LOG = logging.getLogger("AnimaMultiSave")
 
-NODE_VERSION = "1.1.1"
+NODE_VERSION = "1.2.0"
 INPUT_SLOTS = 12
 
 # ---- 下拉框取值 -------------------------------------------------------------
@@ -143,7 +154,7 @@ def as_image_batch(value: Any) -> Optional[torch.Tensor]:
         if len(parts) == 1:
             return parts[0]
         if len({(int(p.shape[1]), int(p.shape[2]), int(p.shape[3])) for p in parts}) != 1:
-            LOG.warning("[Anima 多路保存] 收到形状不一致的图片列表，只用第一组")
+            LOG.warning("[Anima Multi-Save] image list has inconsistent shapes; using the first group")
             return parts[0]
         return torch.cat(parts, dim=0)
 
@@ -272,7 +283,7 @@ def leftover_metadata(path: str) -> list[str]:
             except Exception:
                 pass
     except Exception as exc:  # 读不出来就别拦着保存流程
-        LOG.warning("[Anima 多路保存] 校验 %s 失败：%s", path, exc)
+        LOG.warning("[Anima Multi-Save] failed to verify %s: %s", path, exc)
     return found
 
 
@@ -331,7 +342,7 @@ def clean_stale_files(
                 os.remove(target)
                 removed.append(name)
         except OSError as exc:
-            LOG.warning("[Anima 多路保存] 删除旧文件 %s 失败：%s", target, exc)
+            LOG.warning("[Anima Multi-Save] failed to delete stale file %s: %s", target, exc)
     return removed
 
 
@@ -349,31 +360,33 @@ class AnimaMultiSave:
                     "STRING",
                     {
                         "default": "anima/result",
-                        "tooltip": "输出文件名前缀，可带子目录（anima/result → output/anima/），"
-                        "也支持 %date% %width% 等 ComfyUI 变量。",
+                        "tooltip": "Output filename prefix. Subfolders are allowed "
+                        "(anima/result -> output/anima/); ComfyUI variables such as %date% / "
+                        "%width% work too.",
                     },
                 ),
                 "output_mode": (
                     OUTPUT_MODES,
                     {
                         "default": "best_only",
-                        "tooltip": "best_only：只保存优先级最高的那一路（推荐）。\n"
-                        "all_inputs：每一路都存一份，文件名带 _p1/_p2… 后缀。",
+                        "tooltip": "best_only: save only the highest-priority port "
+                        "(recommended).\nall_inputs: save every port that carries an image, "
+                        "each with a _p1/_p2... suffix.",
                     },
                 ),
                 "priority_order": (
                     PRIORITY_ORDERS,
                     {
                         "default": "high_port_first",
-                        "tooltip": "high_port_first：端口号大的优先（后面接最终图）。\n"
-                        "low_port_first：端口号小的优先。",
+                        "tooltip": "high_port_first: higher port numbers win (wire the final "
+                        "image to the highest port).\nlow_port_first: lower port numbers win.",
                     },
                 ),
                 "format": (
                     FORMATS,
                     {
                         "default": "png",
-                        "tooltip": "png 无损；jpg / webp 有损但体积小。",
+                        "tooltip": "png is lossless; jpg / webp are lossy but much smaller.",
                     },
                 ),
                 "quality": (
@@ -383,7 +396,7 @@ class AnimaMultiSave:
                         "min": 1,
                         "max": 100,
                         "step": 1,
-                        "tooltip": "jpg / webp 的质量，png 不用这个参数。",
+                        "tooltip": "Quality for jpg / webp. Ignored for png.",
                     },
                 ),
                 "png_compress_level": (
@@ -393,34 +406,40 @@ class AnimaMultiSave:
                         "min": 0,
                         "max": 9,
                         "step": 1,
-                        "tooltip": "PNG 压缩等级，只影响体积和保存速度，不影响画质。",
+                        "tooltip": "PNG compression level. Affects file size and save speed "
+                        "only, not image quality.",
                     },
                 ),
                 "metadata": (
                     METADATA_MODES,
                     {
                         "default": "strip_all",
-                        "tooltip": "strip_all：不写入、并逐块清除 prompt / workflow / EXIF 等元数据。\n"
-                        "embed_workflow：和原生 SaveImage 一样把工作流写进 PNG（仅 png 生效）。",
+                        "tooltip": "strip_all: write nothing and strip prompt / workflow / "
+                        "EXIF metadata chunk by chunk.\nembed_workflow: embed the workflow like "
+                        "the native SaveImage node (png only).",
                     },
                 ),
                 "overwrite": (
                     "BOOLEAN",
                     {
                         "default": False,
-                        "tooltip": "False（推荐）：每轮用 ComfyUI 自增编号新建文件，和原生 SaveImage 一样，\n"
-                        "历史/队列里的缩略图各是各的。\n"
-                        "True：始终覆盖同一组文件名（result_00001.png…），好处是固定路径永远是最新图；\n"
-                        "代价是 ComfyUI 资产库不支持同一路径多次产出 —— 为了不让历史全变成最新那张，\n"
-                        "本节点会另外往 temp/ 写一份唯一命名的预览副本供前端显示。",
+                        "tooltip": "False (recommended): create a new file each run with "
+                        "ComfyUI's counter, exactly like the native SaveImage node, so history and "
+                        "queue thumbnails stay distinct.\nTrue: always overwrite the same filenames "
+                        "(result_00001.png...). The fixed path always points at the latest image, "
+                        "but ComfyUI's asset/history view does not support producing the same output "
+                        "path repeatedly - to keep every history entry distinct, the node also writes "
+                        "a uniquely named preview copy under temp/ for the frontend.",
                     },
                 ),
                 "clean_stale": (
                     "BOOLEAN",
                     {
                         "default": True,
-                        "tooltip": "只在 overwrite=True 时生效：顺手删掉同前缀下这次没产出的旧帧"
-                        "（例如上次 16 帧、这次 8 帧）。只删严格匹配「前缀[_pN]_00001」的文件。",
+                        "tooltip": "Only used when overwrite=True: also remove stale frames "
+                        "from the same prefix that this run did not produce (e.g. 16 frames last "
+                        "time, 8 this time). Only files that strictly match prefix[_pN]_00001 "
+                        "are removed.",
                     },
                 ),
             },
@@ -428,7 +447,8 @@ class AnimaMultiSave:
                 f"images_{i}": (
                     "IMAGE",
                     {
-                        "tooltip": f"第 {i} 路图片。没接线 / 被静音 / 被旁路时这里就是空的，节点会自动往下退一级。",
+                        "tooltip": f"Image for port {i}. Empty when not connected / muted / "
+                        f"bypassed; the node then steps down to the next port.",
                     },
                 )
                 for i in range(1, INPUT_SLOTS + 1)
@@ -446,8 +466,9 @@ class AnimaMultiSave:
     OUTPUT_NODE = True
     CATEGORY = "AnimaArt/save"
     DESCRIPTION = (
-        "多端口保存：12 个 IMAGE 输入（动态端口版可以无限加），自动挑「跑得最远"
-        "（优先级最高）的那一路」落盘，支持覆盖写 / 清旧帧 / 元数据消除。"
+        "Multi-port save: 12 IMAGE inputs (the dynamic-port variant can grow freely). Saves "
+        "whichever port ran furthest (highest priority), with overwrite mode, stale-file "
+        "cleanup and metadata stripping."
     )
     SEARCH_ALIASES = [
         "save image",
@@ -573,7 +594,7 @@ def _write_preview_copy(
         with open(os.path.join(folder, name), "wb") as fh:
             fh.write(data)
     except OSError as exc:
-        LOG.warning("[Anima 多路保存] 写预览副本失败（不影响正式输出）：%s", exc)
+        LOG.warning("[Anima Multi-Save] failed to write preview copy (output is unaffected): %s", exc)
         return {"filename": output_name, "subfolder": "", "type": "output"}
     return {"filename": name, "subfolder": PREVIEW_SUBFOLDER, "type": "temp"}
 
@@ -593,7 +614,7 @@ def save_ports(
     prompt: Any = None,
     extra_pnginfo: Any = None,
     unique_id: Any = None,
-    log_tag: str = "[Anima 多路保存]",
+    log_tag: str = "[Anima Multi-Save]",
 ) -> tuple[Optional[torch.Tensor], str, list[dict[str, Any]]]:
     """返回 (被选中的图, info 文本, ui.images 列表)；没有可用图时图是 None、列表为空。"""
     output_mode = output_mode if output_mode in OUTPUT_MODES else "best_only"
@@ -608,8 +629,11 @@ def save_ports(
         [(int(slot), t) for slot, t in ports if t is not None], key=lambda p: p[0]
     )
     if not ports:
-        info = "没有可用输入：所有端口都没有图（未连接 / 被静音 / 上游没有产出）"
-        LOG.warning("%s %s（节点 %s），本次不保存。", log_tag, info, unique_id)
+        info = (
+            "No usable input: no image on any port (not connected / muted / upstream produced "
+            "nothing)"
+        )
+        LOG.warning("%s %s (node %s); nothing saved this run.", log_tag, info, unique_id)
         return None, info, []
 
     # 2) 挑要保存的端口
@@ -638,7 +662,8 @@ def save_ports(
     png_text: dict[str, str] = {}
     if not strip and fmt != "png":
         LOG.warning(
-            "%s %s 不支持嵌入工作流元数据，本次输出是干净的。想保留工作流请用 png。",
+            "%s: %s cannot embed workflow metadata; this output is clean. Use png to keep "
+            "the workflow.",
             log_tag,
             fmt,
         )
@@ -650,7 +675,7 @@ def save_ports(
                 try:
                     png_text[str(key)] = json.dumps(val, ensure_ascii=False)
                 except (TypeError, ValueError):
-                    LOG.warning("%s 跳过无法序列化的 pnginfo: %s", log_tag, key)
+                    LOG.warning("%s skipping non-serializable pnginfo: %s", log_tag, key)
 
     ext = _EXT[fmt]
     results: list[dict[str, Any]] = []
@@ -679,10 +704,10 @@ def save_ports(
 
             if strip and fmt == "png":
                 LOG.debug(
-                    "%s %s 清除元数据块：%s",
+                    "%s %s stripped metadata chunks: %s",
                     log_tag,
                     name,
-                    ",".join(removed) if removed else "（无）",
+                    ",".join(removed) if removed else "(none)",
                 )
             if strip:
                 leftovers.extend(f"{name}:{k}" for k in leftover_metadata(path))
@@ -718,41 +743,41 @@ def save_ports(
             os.path.join(folder_paths.get_temp_directory(), PREVIEW_SUBFOLDER)
         )
         if pruned:
-            LOG.debug("%s 清理了 %d 个旧预览副本", log_tag, pruned)
+            LOG.debug("%s pruned %d old preview copies", log_tag, pruned)
 
     # 7) 汇总信息
     used = ",".join(str(port) for port, _ in chosen)
     available = ",".join(str(port) for port, _ in ports)
     files = ", ".join(out_names)
     bits = [
-        f"{len(out_names)} 张 → {subfolder or '.'}/{out_names[0]}"
-        + (f" 等 {len(out_names)} 个文件" if len(out_names) > 1 else ""),
-        f"端口 {used}（可用：{available}）",
-        f"模式 {output_mode}/{priority_order}"
-        + ("（固定文件名覆盖）" if overwrite else "（每轮新文件）"),
-        "元数据 "
+        f"{len(out_names)} image(s) -> {subfolder or '.'}/{out_names[0]}"
+        + (f" (+{len(out_names) - 1} more)" if len(out_names) > 1 else ""),
+        f"ports {used} (available: {available})",
+        f"mode {output_mode}/{priority_order}"
+        + (" (fixed filenames)" if overwrite else " (new file each run)"),
+        "metadata "
         + (
-            "已清除"
+            "stripped"
             if strip
-            else ("已保存为工作流" if embed_workflow else f"已清除（{fmt} 不支持嵌入）")
+            else ("embedded as workflow" if embed_workflow else f"stripped ({fmt} cannot embed)")
         ),
     ]
     if deleted:
-        bits.append(f"清理旧文件 {len(deleted)} 个")
+        bits.append(f"removed {len(deleted)} stale file(s)")
     info = " | ".join(bits)
 
     if leftovers:
         LOG.warning(
-            "%s 这些文件仍有元数据残留：%s",
+            "%s metadata still present in: %s",
             log_tag,
             ", ".join(sorted(set(leftovers))[:10]),
         )
-    LOG.info("%s %s | 文件：%s", log_tag, info, files)
+    LOG.info("%s %s | files: %s", log_tag, info, files)
 
     return chosen[0][1], info, results
 
 
 NODE_CLASS_MAPPINGS = {"AnimaMultiSave": AnimaMultiSave}
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "AnimaMultiSave": "💾 Anima 多路保存 (固定 12 路)"
+    "AnimaMultiSave": "💾 Anima Multi-Save (Fixed 12 Ports)"
 }

@@ -9,6 +9,11 @@ One save node, two jobs:
 
 Category: `AnimaArt/save` (searching `Anima` or `多路保存` in the node tree finds it either way).
 
+> **1.2.0 — English UI with optional translations.** Every label, tooltip and the `info`
+> output are English now, and the pack ships `locales/en` + `locales/zh`; set ComfyUI's
+> language to Chinese to get the Chinese UI back. The widget keys did not change, so
+> existing workflows keep working.
+
 ## Two versions — pick one
 
 | Node | Ports | Best for |

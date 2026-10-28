@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-anima-multisave"
-version = "1.1.1"
-description = "Anima 多路保存：多路 IMAGE 自动挑最终图落盘（12 路 / 动态端口）+ 元数据消除"
+version = "1.2.0"
+description = "Anima Multi-Save: multi-port IMAGE saver that keeps the port that ran furthest (12 fixed ports or dynamic ports) and strips PNG/JPEG/WebP metadata by default."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }

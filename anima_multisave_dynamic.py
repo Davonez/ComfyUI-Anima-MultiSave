@@ -73,11 +73,12 @@ class AnimaMultiSaveDynamic(IO.ComfyNode):
         )
         return IO.Schema(
             node_id="AnimaMultiSaveDynamic",
-            display_name="💾 Anima 多路保存 (动态端口)",
+            display_name="💾 Anima Multi-Save (Dynamic Ports)",
             category="AnimaArt/save",
             description=(
-                "多路保存：IMAGE 输入可以一直点 + 增加，自动挑「这次跑到最远（端口号最大）"
-                "的那一路」落盘，文件名固定覆盖，可清旧帧、可去除元数据。"
+                "Multi-port save with growable IMAGE inputs: click + to add as many ports as "
+                "needed, and the node saves whichever port ran furthest (highest port number). "
+                "Optional fixed filenames, stale-frame cleanup and metadata stripping."
             ),
             search_aliases=[
                 "anima save",
@@ -91,37 +92,49 @@ class AnimaMultiSaveDynamic(IO.ComfyNode):
                 IO.String.Input(
                     "filename_prefix",
                     default="anima/result",
-                    tooltip="输出前缀，可带子目录（anima/result → output/anima/），也支持 %date% %width% 等变量。",
+                    tooltip="Output prefix. Subfolders are allowed (anima/result -> output/anima/); "
+                    "variables such as %date% / %width% work too.",
                 ),
                 IO.Combo.Input(
                     "output_mode",
                     options=OUTPUT_MODES,
                     default="best_only",
-                    tooltip="best_only：只存优先级最高的那一路（推荐）。all_inputs：每路都存一份，文件名带 _pN。",
+                    tooltip="best_only: save only the highest-priority port (recommended). "
+                    "all_inputs: save every port, each with a _pN suffix.",
                 ),
                 IO.Combo.Input(
                     "priority_order",
                     options=PRIORITY_ORDERS,
                     default="high_port_first",
-                    tooltip="high_port_first：端口号大的优先（最终图接大号口）。low_port_first：反过来。",
+                    tooltip="high_port_first: higher port numbers win (wire the final image to a "
+                    "high port). low_port_first: the opposite.",
                 ),
                 IO.Combo.Input("format", options=FORMATS, default="png",
-                               tooltip="png 无损；jpg / webp 有损但体积小。"),
+                               tooltip="png is lossless; jpg / webp are lossy but much smaller."),
                 IO.Int.Input("quality", default=95, min=1, max=100,
-                             tooltip="jpg / webp 质量，png 不用。"),
+                             tooltip="Quality for jpg / webp. Ignored for png."),
                 IO.Int.Input("png_compress_level", default=4, min=0, max=9, advanced=True,
-                             tooltip="PNG 压缩等级，只影响体积和速度，不影响画质。"),
+                             tooltip="PNG compression level. Affects file size and save speed only, "
+                             "not image quality."),
                 IO.Combo.Input("metadata", options=METADATA_MODES, default="strip_all",
-                               tooltip="strip_all：清掉 prompt / workflow / EXIF 等元数据。embed_workflow：像原生 SaveImage 一样写回工作流（仅 png）。"),
+                               tooltip="strip_all: strip prompt / workflow / EXIF metadata. "
+                               "embed_workflow: embed the workflow like the native SaveImage node "
+                               "(png only)."),
                 IO.Boolean.Input("overwrite", default=False,
-                                 tooltip="False（推荐）：每轮新建文件，历史缩略图各是各的。True：始终覆盖同一组文件名（固定路径永远是最新图），节点会额外往 temp 写唯一命名的预览副本，避免历史缩略图全变成最新那张。"),
+                                 tooltip="False (recommended): create a new file each run so "
+                                 "history thumbnails stay distinct. True: always overwrite the same "
+                                 "filenames (the fixed path is always the latest image); the node "
+                                 "then writes a uniquely named preview copy under temp/ so history "
+                                 "does not collapse onto the latest image."),
                 IO.Boolean.Input("clean_stale", default=True,
-                                 tooltip="只在 overwrite=True 时生效：顺手删掉同前缀下这次没产出的旧帧。"),
+                                 tooltip="Only used when overwrite=True: also remove stale frames "
+                                 "from the same prefix that this run did not produce."),
                 IO.Autogrow.Input(
                     "images",
                     template=template,
                     optional=True,   # 一路都不接也不报错：静音掉全部流程时优雅退出
-                    tooltip="把 IMAGE 接进来，接多少都行：点输入下面的 + 继续加口。端口序号越大优先级越高。",
+                    tooltip="Wire IMAGE outputs here; add as many as you like with the + button. "
+                    "Higher port numbers have higher priority.",
                 ),
             ],
             outputs=[
@@ -189,5 +202,5 @@ class AnimaMultiSaveDynamic(IO.ComfyNode):
 
 NODE_CLASS_MAPPINGS = {"AnimaMultiSaveDynamic": AnimaMultiSaveDynamic}
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "AnimaMultiSaveDynamic": "💾 Anima 多路保存 (动态端口·可无限加)"
+    "AnimaMultiSaveDynamic": "💾 Anima Multi-Save (Dynamic Ports)"
 }
